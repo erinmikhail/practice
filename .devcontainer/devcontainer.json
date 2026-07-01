@@ -26,4 +26,4 @@
     "remoteUser": "vscode",
   
     "postCreateCommand": "pip install fastapi uvicorn sqlalchemy pydantic aiosqlite"
-  }
+}
