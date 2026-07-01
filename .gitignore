@@ -1,0 +1,16 @@
+# База данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Виртуальные окружения
+venv/
+env/
+
+# Секреты (здесь будут лежать ключи от AI API)
+.env

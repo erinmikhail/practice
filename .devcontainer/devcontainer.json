@@ -1,0 +1,29 @@
+{
+    "name": "Finance AI",
+    "build": {
+      "dockerfile": "Dockerfile"
+    },
+    
+    "forwardPorts": [8000],
+  
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "ms-python.python",              // Поддержка Python
+          "ms-python.vscode-pylance",      // Умное автодополнение кода
+          "mtxr.sqltools",                 // Просмотр базы данных прямо в VS Code
+          "mtxr.sqltools-driver-sqlite",   // Драйвер SQLite для SQLTools
+          "humao.rest-client"              // Для тестирования API (вместо Postman)
+        ],
+        "settings": {
+          "python.defaultInterpreterPath": "/usr/local/bin/python",
+          "python.formatting.provider": "black", // Автоформатирование кода
+          "editor.formatOnSave": true
+        }
+      }
+    },
+  
+    "remoteUser": "vscode",
+  
+    "postCreateCommand": "pip install fastapi uvicorn sqlalchemy pydantic aiosqlite"
+  }
