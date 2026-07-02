@@ -13,4 +13,5 @@ venv/
 env/
 
 # Секреты (здесь будут лежать ключи от AI API)
-.env
+.env.DS_Store
+**/.DS_Store
