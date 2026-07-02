@@ -1,29 +1,30 @@
 {
-    "name": "Finance AI",
-    "build": {
-      "dockerfile": "Dockerfile"
-    },
-    
-    "forwardPorts": [8000],
-  
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "ms-python.python",              // Поддержка Python
-          "ms-python.vscode-pylance",      // Умное автодополнение кода
-          "mtxr.sqltools",                 // Просмотр базы данных прямо в VS Code
-          "mtxr.sqltools-driver-sqlite",   // Драйвер SQLite для SQLTools
-          "humao.rest-client"              // Для тестирования API (вместо Postman)
-        ],
-        "settings": {
-          "python.defaultInterpreterPath": "/usr/local/bin/python",
-          "python.formatting.provider": "black", // Автоформатирование кода
-          "editor.formatOnSave": true
-        }
+  "name": "Finance AI (Fullstack)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "forwardPorts": [
+    8000,
+    5173
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-sqlite",
+        "humao.rest-client",
+        "bradlc.vscode-tailwindcss",
+        "dsznajder.es7-react-js-snippets"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true
       }
-    },
-  
-    "remoteUser": "vscode",
-  
-    "postCreateCommand": "pip install fastapi uvicorn sqlalchemy pydantic aiosqlite"
+    }
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "pip install fastapi uvicorn sqlalchemy pydantic aiosqlite python-dotenv gigachat dateparser pytesseract pillow && cd frontend && npm install"
 }

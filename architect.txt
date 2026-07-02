@@ -1,42 +1,49 @@
 practice/
 │
-├── .devcontainer/                Слой инфраструктуры разработки
-│   ├── devcontainer.json         Конфигурация расширений и портов VS Code
-│   └── Dockerfile                Инструкция сборки ОС контейнера (Python, SQLite)
+├── .devcontainer/               # Слой инфраструктуры разработки
+│   ├── devcontainer.json        # Конфигурация расширений (Python, React) и портов VS Code
+│   └── Dockerfile               # Инструкция сборки ОС контейнера
 │
-├── frontend/                     ИЗОЛИРОВАННЫЙ СЛОЙ КЛИЕНТА (Фронтенд)
-│   ├── static/                   Статические ресурсы
-│   │   ├── css/
-│   │   │   └── style.css         Стили и верстка интерфейса
-│   │   └── js/
-│   │       └── app.js            Логика (Axios-запросы, Drag&Drop, State)
-│   └── templates/                HTML-каркас
-│       └── index.html            Single Page Application (SPA) страница
+├── frontend/                    # ИЗОЛИРОВАННЫЙ СЛОЙ КЛИЕНТА (React + Vite + Tailwind)
+│   ├── package.json             # Зависимости NPM (react, axios, react-router-dom)
+│   ├── vite.config.js           # Настройки сборщика фронтенда
+│   ├── index.html               # Корневой HTML-файл для монтирования React
+│   ├── .env                     # Конфиг фронтенда (содержит VITE_API_BASE_URL)
+│   └── src/                     # Исходный код интерфейса
+│       ├── main.jsx             # Точка входа React
+│       ├── api/                 # Сетевой слой: client.js, operations.js, моки
+│       ├── components/          # UI-компоненты: формы, графики, таблицы, сайдбар
+│       ├── constants/           # Справочники: categories.js (Единый источник категорий)
+│       ├── context/             # Глобальное состояние: OperationsContext.jsx
+│       ├── hooks/               # Бизнес-логика UI: useOperations.js, useOperationStats.js
+│       ├── pages/               # Основные экраны: HomePage, ImportPage, OperationsPage
+│       └── utils/               # Утилиты: formatters.js (дата/валюта), validation.js
 │
-├── backend/                      ИЗОЛИРОВАННЫЙ СЛОЙ СЕРВЕРА (Бэкенд на Python)
+├── backend/                     # ИЗОЛИРОВАННЫЙ СЛОЙ СЕРВЕРА (FastAPI)
 │   ├── __init__.py
-│   ├── main.py                   Точка входа: инициализация FastAPI, Middleware (CORS)
-│   ├── config.py                 Переменные окружения, пути к БД, API-ключи нейросетей
+│   ├── main.py                  # Инициализация FastAPI, настройка CORS для связи с React
+│   ├── config.py                # Безопасная загрузка переменных окружения (dotenv)
+│   ├── .env                     # Приватные ключи бэкенда (GIGACHAT_AUTH_KEY). Игнорируется Git.
 │   │
-│   ├── database/                 ВСЁ ЧТО СВЯЗАНО С БАЗОЙ ДАННЫХ
+│   ├── database/                # ЯДРО ДАННЫХ (Твоя зона ответственности)
 │   │   ├── __init__.py
-│   │   ├── session.py            Настройка Engine SQLAlchemy и генератор сессий подключения
-│   │   ├── models.py             Декларативные модели (структура таблиц SQLite на диске)
-│   │   └── crud.py               Чистые SQL/ORM запросы (создание, чтение, апдейты, аналитика)
+│   │   ├── session.py           # Настройка Engine SQLite и генерация сессий
+│   │   ├── models.py            # Декларативные ORM-модели (структура таблиц)
+│   │   └── crud.py              # Функции манипуляции данными (get, create, bulk_insert)
 │   │
-│   ├── api/                      СЛОЙ СЕТЕВЫХ ЭНДПОИНТОВ (Контроллеры / Роуты)
+│   ├── api/                     # СЛОЙ СЕТЕВЫХ ЭНДПОИНТОВ (Маршруты для Axios)
 │   │   ├── __init__.py
-│   │   ├── deps.py               Зависимости для инжекта (проверка авторизации, выдача сессий БД)
-│   │   ├── schemas.py            Валидационные схемы Pydantic (контракты для запросов/ответов)
-│   │   └── endpoints/            Конкретные группы HTTP-маршрутов
+│   │   ├── schemas.py           # Pydantic-схемы (жесткие контракты для входящего JSON)
+│   │   └── endpoints/           # HTTP-контроллеры
 │   │       ├── __init__.py
-│   │       ├── auth.py           Логика пользователей: регистрация, вход, JWT-токены
-│   │       ├── transactions.py   Логика транзакций: CRUD ручных операций и графики статистики
-│   │       └── ai.py             Маршрут для обработки AI: прием картинок/текста чеков
+│   │       ├── transactions.py  # Эндпоинты истории и ручного ввода (/api/transactions)
+│   │       └── ai.py            # Эндпоинты импорта: /api/import/text, /api/import/image
 │   │
-│   └── services/                 СЛОЙ СЛОЖНОЙ БИЗНЕС-ЛОГИКИ (Сервисы)
+│   └── services/                # СЛОЙ ИНТЕГРАЦИЙ (AI-модуль)
 │       ├── __init__.py
-│       └── ai_agent.py           Модуль AI-агента (сборка промптов, Vision API, парсинг JSON)
+│       ├── text_AI.py           # Логика извлечения данных из текста через GigaChat
+│       └── OCR_AI.py            # Логика распознавания изображений (Tesseract + GigaChat)
 │
-├── requirements.txt              Все зависимости Python-пакетов проекта
-└── .gitignore                    Защита Git от попадания мусора, файлов БД и секретных ключей
+├── API_CONTRACT.md              # Документация-договор: как фронт и бэк общаются друг с другом
+├── requirements.txt             # Зависимости Python (fastapi, sqlalchemy, gigachat, pytesseract)
+└── .gitignore                   # Исключения для Git (БД, node_modules, виртуальные окружения)
