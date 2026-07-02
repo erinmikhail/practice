@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Query, Path, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Annotated
 
 from backend.database.session import get_db
 from backend.database import crud
@@ -11,8 +11,8 @@ router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
 @router.get("/", response_model=List[schemas.OperationResponse])
 async def get_transactions(
-    skip: int = 0,
-    limit: int = 100,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(gt=0)] = 100,
     db: Session = Depends(get_db)
 ):
     """
@@ -52,7 +52,7 @@ async def create_transaction(
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_transaction(
-    transaction_id: int,
+    transaction_id: Annotated[int, Path(gt=0)],
     db: Session = Depends(get_db)
 ):
     """
