@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.endpoints import transactions
+from backend.api.endpoints import operations
 from backend.database import models
 from backend.database.session import engine
 
@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # Routers
-app.include_router(transactions.router)
+app.include_router(operations.router)
 
 
 # Проверка состояния API
