@@ -3,7 +3,7 @@ from sqlalchemy import func
 from typing import List
 
 from . import models
-from backend import schemas
+from backend.api import schemas
 
 
 def get_user_operations(db: Session, user_id: int, skip: int = 0, limit: int = 100):
