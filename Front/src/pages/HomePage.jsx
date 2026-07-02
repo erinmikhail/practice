@@ -1,17 +1,19 @@
-import { useOperations } from '../hooks/useOperations';
-import { useOperationStats } from '../hooks/useOperationStats';
+import { calculateStats } from '../utils/stats';
 import { StatsCard } from '../components/stats/StatsCard';
 import { CategoryPieChart } from '../components/stats/CategoryPieChart';
 
-export function HomePage() {
-  const { operations, loading } = useOperations();
-  // Считаем доходы/расходы/баланс/разбивку по категориям прямо из
-  // текущего списка операций — эти цифры не могут "отстать" от списка.
-  const stats = useOperationStats(operations);
-
+export function HomePage({ operations, loading, loadError }) {
   if (loading) {
     return <p className="text-slate-500">Загрузка...</p>;
   }
+
+  if (loadError) {
+    return <p className="text-rose-600">Не удалось загрузить данные с сервера.</p>;
+  }
+
+  // Считаем доходы/расходы/баланс/разбивку по категориям прямо из
+  // текущего списка операций — эти цифры не могут "отстать" от списка.
+  const stats = calculateStats(operations);
 
   return (
     <div className="max-w-4xl">

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useOperations } from '../hooks/useOperations';
 import { OperationForm } from '../components/operations/OperationForm';
 import { OperationList } from '../components/operations/OperationList';
 
@@ -12,12 +11,15 @@ const FILTERS = [
   { key: 'expense', label: 'Расходы' },
 ];
 
-export function OperationsPage() {
-  const { operations, loading, addOperation, removeOperation } = useOperations();
+export function OperationsPage({ operations, loading, loadError, onAdd, onDelete }) {
   const [activeFilter, setActiveFilter] = useState('all');
 
   if (loading) {
     return <p className="text-slate-500">Загрузка...</p>;
+  }
+
+  if (loadError) {
+    return <p className="text-rose-600">Не удалось загрузить данные с сервера.</p>;
   }
 
   const visibleOperations =
@@ -29,7 +31,7 @@ export function OperationsPage() {
     <div className="max-w-3xl space-y-6">
       <h2 className="text-xl font-semibold text-slate-800">Операции</h2>
 
-      <OperationForm onSubmit={addOperation} />
+      <OperationForm onSubmit={onAdd} />
 
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -55,7 +57,7 @@ export function OperationsPage() {
 
         <OperationList
           operations={visibleOperations}
-          onDelete={removeOperation}
+          onDelete={onDelete}
           emptyMessage={
             activeFilter === 'all'
               ? 'Операций пока нет — добавьте первую выше.'

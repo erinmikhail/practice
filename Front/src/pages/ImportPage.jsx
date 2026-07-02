@@ -1,63 +1,76 @@
 import { useState } from 'react';
-import { useOperations } from '../hooks/useOperations';
-import { importFromAI } from '../api/operations';
+import { importFromText, importFromImage } from '../api';
+import { generateId } from '../utils/id';
 import { AiImportPanel } from '../components/ai-import/AiImportPanel';
 import { ImportPreviewList } from '../components/ai-import/ImportPreviewList';
 
-export function ImportPage() {
-  const { addOperation } = useOperations();
-  const [previewItems, setPreviewItems] = useState([]);
+export function ImportPage({ onConfirm }) {
+  const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [emptyMessage, setEmptyMessage] = useState('');
+  const [message, setMessage] = useState('');
 
-  async function handleImport(payload) {
+  // Черновики, которые вернул сервер, ещё не сохранены в базе — у них нет id.
+  // Даём каждому временный id только для того, чтобы React мог отрисовать
+  // список и чтобы кнопки "Добавить"/"Отклонить" знали, какую строку убрать.
+  function showDrafts(items) {
+    setDrafts(items.map((item) => ({ ...item, id: generateId() })));
+    setMessage(items.length === 0 ? 'Не удалось найти операции — попробуйте другой текст или скриншот.' : '');
+  }
+
+  async function handleImportText(text) {
     setLoading(true);
-    setEmptyMessage('');
-    const items = await importFromAI(payload);
-    setPreviewItems(items);
-    if (items.length === 0) {
-      setEmptyMessage('Не удалось найти операции — попробуйте другой текст, файл или скриншот.');
+    setMessage('');
+    try {
+      showDrafts(await importFromText(text));
+    } catch {
+      setMessage('Не удалось связаться с сервером. Попробуйте ещё раз.');
     }
     setLoading(false);
   }
 
-  // Превью хранит служебные поля id/pending, которых не должно быть
-  // у настоящей сохранённой операции — убираем их перед добавлением.
-  function toRealOperation(item) {
-    const { id, pending, ...operation } = item;
-    return operation;
+  async function handleImportImage(file) {
+    setLoading(true);
+    setMessage('');
+    try {
+      showDrafts(await importFromImage(file));
+    } catch {
+      setMessage('Не удалось связаться с сервером. Попробуйте ещё раз.');
+    }
+    setLoading(false);
   }
 
-  async function handleConfirm(item) {
-    await addOperation(toRealOperation(item));
-    setPreviewItems((prev) => prev.filter((i) => i.id !== item.id));
+  // Временный id черновика не должен уйти на сервер как настоящий id операции —
+  // убираем его перед сохранением.
+  async function handleConfirm(draft) {
+    const { id, ...operation } = draft;
+    await onConfirm(operation);
+    setDrafts((prev) => prev.filter((d) => d.id !== id));
   }
 
   async function handleConfirmAll() {
-    for (const item of previewItems) {
-      await addOperation(toRealOperation(item));
+    for (const draft of drafts) {
+      await handleConfirm(draft);
     }
-    setPreviewItems([]);
   }
 
-  function handleDiscard(item) {
-    setPreviewItems((prev) => prev.filter((i) => i.id !== item.id));
+  function handleDiscard(draft) {
+    setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
   }
 
   function handleDiscardAll() {
-    setPreviewItems([]);
+    setDrafts([]);
   }
 
   return (
     <div className="max-w-3xl space-y-6">
       <h2 className="text-xl font-semibold text-slate-800">Импорт через AI</h2>
 
-      <AiImportPanel onImport={handleImport} loading={loading} />
+      <AiImportPanel onImportText={handleImportText} onImportImage={handleImportImage} loading={loading} />
 
-      {emptyMessage && <p className="text-sm text-slate-500">{emptyMessage}</p>}
+      {message && <p className="text-sm text-slate-500">{message}</p>}
 
       <ImportPreviewList
-        items={previewItems}
+        items={drafts}
         onConfirm={handleConfirm}
         onConfirmAll={handleConfirmAll}
         onDiscard={handleDiscard}

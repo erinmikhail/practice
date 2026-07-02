@@ -6,9 +6,9 @@ const TABS = [
 ];
 
 // Панель отвечает только за ввод данных (текст / картинка) и просит
-// родителя (ImportPage) выполнить сам импорт через onImport(payload).
-// Так вся логика "как разобрать данные" остаётся в одном месте — в api/operations.js.
-export function AiImportPanel({ onImport, loading }) {
+// родителя (ImportPage) выполнить сам запрос к серверу — так вся логика
+// "как разобрать данные" остаётся в одном месте, в src/api.js.
+export function AiImportPanel({ onImportText, onImportImage, loading }) {
   const [activeTab, setActiveTab] = useState('text');
   const [text, setText] = useState('');
   const [file, setFile] = useState(null);
@@ -16,11 +16,11 @@ export function AiImportPanel({ onImport, loading }) {
   function handleSubmit() {
     if (activeTab === 'text') {
       if (!text.trim()) return;
-      onImport({ kind: 'text', text });
+      onImportText(text);
       return;
     }
     if (!file) return;
-    onImport({ kind: activeTab, file });
+    onImportImage(file);
   }
 
   return (
@@ -72,9 +72,8 @@ export function AiImportPanel({ onImport, loading }) {
         {loading ? 'Распознаём...' : 'Разобрать'}
       </button>
 
-      {/* Честно предупреждаем: реального AI-агента ещё нет, это заглушка для демонстрации UI. */}
       <p className="text-xs text-slate-400">
-        Пока это демо-разбор: реальный AI-агент появится, когда будет готов бэкенд.
+        Разбор занимает несколько секунд — данные уходят на сервер и обрабатываются AI-агентом.
       </p>
     </div>
   );

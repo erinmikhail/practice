@@ -11,8 +11,8 @@ const EMPTY_FORM = {
 };
 
 // onSubmit — функция из родителя, которая реально сохраняет операцию
-// (в итоге вызывает addOperation из useOperations). Форма сама ничего
-// не знает про localStorage и вообще про то, как хранятся данные.
+// (отправляет её на сервер). Форма сама ничего не знает о том, как и
+// куда сохраняются данные.
 export function OperationForm({ onSubmit }) {
   const [values, setValues] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
