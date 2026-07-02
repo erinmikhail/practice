@@ -162,7 +162,6 @@ def process_image(image_path):
     # 1. Переводим в оттенки серого
     gray_image = image.convert('L')
 
-    # 2. Автоопределение темы (Тёмная или Светлая)
     stat = ImageStat.Stat(gray_image)
     avg_brightness = stat.mean[0]
 
