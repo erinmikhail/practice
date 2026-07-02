@@ -1,7 +1,0 @@
-/* Подключаем Tailwind одной строкой — в v4 больше не нужен tailwind.config.js */
-@import "tailwindcss";
-
-body {
-  margin: 0;
-  background-color: #f8fafc;
-}
