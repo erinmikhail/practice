@@ -1,8 +1,6 @@
 import os
 import re
 import json
-import shutil
-import platform
 import pytesseract
 from PIL import Image, ImageOps, ImageEnhance, ImageStat
 from datetime import datetime, timedelta
@@ -12,15 +10,8 @@ import dateparser
 
 load_dotenv()
 
-# === КРОССПЛАТФОРМЕННАЯ НАСТРОЙКА TESSERACT ===
-if platform.system() == 'Windows':
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-else:
-    tesseract_path = shutil.which('tesseract')
-    if tesseract_path:
-        pytesseract.pytesseract.tesseract_cmd = tesseract_path
-    else:
-        pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+
+pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
 # === ДОПУСТИМЫЕ КАТЕГОРИИ ===
 ALLOWED_CATEGORIES = [
@@ -52,8 +43,8 @@ SYSTEM_PROMPT = f"""
 
 11. ОСОБЫЕ СЛУЧАИ (обязательно распознавай):
     - Переводы между своими счетами: строка содержит "перевод", "между счетами", "переводы", "накопительный" → category = "transfers", type = "expense"
-    - Пополнения: строка содержит "пополнение", "зачисление", "поступление" → type = "income"
-    - Зарплата: строка содержит "зарплата", "аванс", "премия" → category = "salary", type = "income"
+    - Пополнения: строка содержит "пополнение", "зачисление", "поступление" тогда type = "income"
+    - Зарплата: строка содержит "зарплата", "аванс", "премия" тогда category = "salary", type = "income"
 
 ПРИМЕРЫ ПРАВИЛЬНЫХ ОТВЕТОВ:
 [{{"amount": 250.0, "date": "2026-07-02", "type": "expense", "category": "cafe", "comment": "кофе"}}]
@@ -62,8 +53,6 @@ SYSTEM_PROMPT = f"""
 
 ЕСЛИ НАРУШИШЬ ПРАВИЛА — ТВОЙ ОТВЕТ БУДЕТ ОТВЕРГНУТ.
 """
-
-# === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 
 
 def normalize_date(date_str):
@@ -103,7 +92,7 @@ def clean_json_response(raw_response):
     return "[]"
 
 
-def is_valid_transaction(t):
+def is_valid_operation(t):
     comment = t.get('comment', '').strip()
     category = t.get('category', '')
     if not comment and category == 'other':
@@ -112,10 +101,8 @@ def is_valid_transaction(t):
         return False
     return True
 
-# === ОСНОВНАЯ ФУНКЦИЯ ===
 
-
-def extract_transactions_with_gigachat(raw_text):
+def extract_operations_with_gigachat(raw_text):
     current_date = datetime.now().date()
     today_str = current_date.strftime('%Y-%m-%d')
     yesterday_str = (current_date - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -137,28 +124,26 @@ def extract_transactions_with_gigachat(raw_text):
         ) as giga:
             response = giga.chat(full_prompt)
             raw = response.choices[0].message.content.strip()
-            print("=== СЫРОЙ ОТВЕТ GIGACHAT ===")
-            print(raw)
-            print("============================")
 
             clean_raw = clean_json_response(raw)
-            transactions = json.loads(clean_raw)
-            if not isinstance(transactions, list):
-                transactions = [transactions]
+            operations = json.loads(clean_raw)
+            if not isinstance(operations, list):
+                operations = [operations]
 
-            for t in transactions:
-                if 'date' in t:
-                    t['date'] = normalize_date(t['date'])
-                if t.get('category') not in ALLOWED_CATEGORIES:
-                    t['category'] = 'other'
-                if 'amount' in t and t['amount'] is not None:
+            for op in operations:
+                if 'date' in op:
+                    op['date'] = normalize_date(op['date'])
+                if op.get('category') not in ALLOWED_CATEGORIES:
+                    op['category'] = 'other'
+                if 'amount' in op and op['amount'] is not None:
                     try:
-                        t['amount'] = float(str(t['amount']).replace(',', '.'))
+                        op['amount'] = float(
+                            str(op['amount']).replace(',', '.'))
                     except:
-                        t['amount'] = 0.0
+                        op['amount'] = 0.0
 
-            transactions = [t for t in transactions if is_valid_transaction(t)]
-            return transactions
+            operations = [op for op in operations if is_valid_operation(op)]
+            return operations
 
     except json.JSONDecodeError as e:
         print(f"Ошибка парсинга JSON: {e}")
@@ -172,7 +157,6 @@ def process_image(image_path):
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Файл не найден: {image_path}")
 
-    # === УМНАЯ ПРЕДОБРАБОТКА ИЗОБРАЖЕНИЯ ===
     image = Image.open(image_path)
 
     # 1. Переводим в оттенки серого
@@ -184,10 +168,9 @@ def process_image(image_path):
 
     if avg_brightness < 127:
         prepared_image = ImageOps.invert(gray_image)
-        print("ℹ️ Автоопределение: ТЁМНАЯ тема. Применена инверсия.")
+
     else:
         prepared_image = gray_image
-        print("ℹ️ Автоопределение: СВЕТЛАЯ тема. Инверсия не требуется.")
 
     # 3. Повышаем контрастность текста
     enhancer = ImageEnhance.Contrast(prepared_image)
@@ -198,7 +181,6 @@ def process_image(image_path):
     final_image = contrast_image.resize(
         (width * 2, height * 2), Image.Resampling.LANCZOS)
 
-    # === OCR ===
     raw_text = pytesseract.image_to_string(
         final_image,
         lang='rus+eng',
@@ -206,29 +188,9 @@ def process_image(image_path):
     )
     raw_text = clean_ocr_text(raw_text)
 
-    print("=== OCR TEXT (очищенный) ===")
-    print(raw_text)
-    print("============================")
-
     try:
-        transactions = extract_transactions_with_gigachat(raw_text)
-        print(f"Найдено {len(transactions)} транзакций")
-        return transactions
+        operations = extract_operations_with_gigachat(raw_text)
+        return operations
     except RuntimeError as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"Ошибка: {e}")
         raise
-
-
-if __name__ == '__main__':
-    path = 'backend/backend-AI-scripts/tests/diagramm.jpg'
-    if os.path.exists(path):
-        try:
-            result = process_image(path)
-            print("\n=== ИТОГОВЫЕ ТРАНЗАКЦИИ ===")
-            for i, t in enumerate(result, 1):
-                print(f"{i}. {t}")
-            print("============================")
-        except Exception as e:
-            print(f"❌ Критическая ошибка: {e}")
-    else:
-        print(f"❌ Тестовое изображение не найдено: {path}")

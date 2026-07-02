@@ -29,8 +29,6 @@ SYSTEM_PROMPT = f"""
 ПРИМЕР: [{{"amount": 250, "date": "2026-07-02", "type": "expense", "category": "cafe", "comment": "кофе"}}]
 """
 
-# === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-
 
 def normalize_date(date_str):
     if not date_str or date_str == "null":
@@ -61,11 +59,11 @@ def clean_json_response(raw):
     raise RuntimeError("В ответе GigaChat не найден JSON-массив")
 
 
-def is_valid_transaction(t):
-    comment = t.get('comment', '').strip()
-    if not comment and t.get('category') == 'other':
+def is_valid_operation(op):
+    comment = op.get('comment', '').strip()
+    if not comment and op.get('category') == 'other':
         return False
-    if t.get('amount', 0) == 0:
+    if op.get('amount', 0) == 0:
         return False
     return True
 
@@ -77,13 +75,11 @@ def clean_amount(amount):
         amount = amount.replace(',', '.')
     return float(amount)
 
-# === ОСНОВНАЯ ФУНКЦИЯ ===
-
 
 def process_text(user_input):
     """
     Принимает текст от пользователя.
-    Возвращает массив транзакций.
+    Возвращает массив операций.
     В случае ошибки GigaChat — выбрасывает исключение.
     """
     if not user_input or not user_input.strip():
@@ -105,45 +101,26 @@ def process_text(user_input):
             auth_data={"grant_type": "api_key", "scope": "GIGACHAT_API_PERS"}
         ) as giga:
             raw = giga.chat(prompt).choices[0].message.content.strip()
-            print("=== СЫРОЙ ОТВЕТ GIGACHAT ===")
-            print(raw)
-            print("============================")
 
             clean_raw = clean_json_response(raw)
-            transactions = json.loads(clean_raw)
-            if not isinstance(transactions, list):
-                transactions = [transactions]
+            operations = json.loads(clean_raw)
+            if not isinstance(operations, list):
+                operations = [operations]
 
-            for t in transactions:
-                t['date'] = normalize_date(t.get('date')) or today
-                if t.get('category') not in ALLOWED_CATEGORIES:
-                    t['category'] = 'other'
-                t['amount'] = clean_amount(t.get('amount', 0))
+            for op in operations:
+                op['date'] = normalize_date(op.get('date')) or today
+                if op.get('category') not in ALLOWED_CATEGORIES:
+                    op['category'] = 'other'
+                op['amount'] = clean_amount(op.get('amount', 0))
 
-            return [t for t in transactions if is_valid_transaction(t)]
+            return [op for op in operations if is_valid_operation(op)]
 
     except json.JSONDecodeError as e:
-        print(f"❌ Ошибка парсинга JSON: {e}")
+        print(f"Ошибка парсинга JSON: {e}")
         raise RuntimeError(f"GigaChat вернул невалидный JSON: {e}")
     except RuntimeError as e:
-        print(f"❌ Ошибка: {e}")
+        print(f"Ошибка: {e}")
         raise
     except Exception as e:
-        print(f"❌ Ошибка GigaChat: {e}")
+        print(f"Ошибка GigaChat: {e}")
         raise RuntimeError(f"Ошибка при обращении к GigaChat: {e}")
-
-
-# === ТЕСТ ===
-if __name__ == '__main__':
-    test_text = """купил кофе 250р
-зарплата 50000р сегодня
-оплатил такси 800р вчера
-перевод маме 3000р 28 июня"""
-
-    try:
-        result = process_text(test_text)
-        print("\n=== ИТОГОВЫЕ ТРАНЗАКЦИИ ===")
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        print("============================")
-    except RuntimeError as e:
-        print(f"❌ Ошибка: {e}")
