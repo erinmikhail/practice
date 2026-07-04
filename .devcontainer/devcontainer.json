@@ -36,5 +36,5 @@
     }
   },
   "remoteUser": "vscode",
-  "postCreateCommand": "pip install fastapi uvicorn sqlalchemy pydantic aiosqlite python-dotenv gigachat dateparser pytesseract pillow && cd frontend && npm install"
+  "postCreateCommand": "pip install fastapi uvicorn sqlalchemy pydantic aiosqlite python-dotenv gigachat dateparser pytesseract pillow && cd front && npm install"
 }

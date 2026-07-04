@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-dotenv
+gigachat
+dateparser
+pytesseract
+Pillow
+python-multipart
+passlib[bcrypt]
+python-jose
+email-validator
