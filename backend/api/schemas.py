@@ -3,9 +3,10 @@ from datetime import date as dt_date
 from typing import Optional
 
 ALLOWED_CATEGORIES = [
-    "groceries", "transport", "cafe", "entertainment", 
+    "groceries", "transport", "cafe", "entertainment",
     "health", "transfers", "salary", "other"
 ]
+
 
 class OperationBase(BaseModel):
     amount: float = Field(..., gt=0, description="Сумма операции")
@@ -23,11 +24,14 @@ class OperationBase(BaseModel):
     @field_validator('category')
     def validate_category(cls, v):
         if v not in ALLOWED_CATEGORIES:
-            raise ValueError(f"Unknown category. Allowed: {', '.join(ALLOWED_CATEGORIES)}")
+            raise ValueError(
+                f"Unknown category. Allowed: {', '.join(ALLOWED_CATEGORIES)}")
         return v
+
 
 class OperationCreate(OperationBase):
     pass
+
 
 class OperationResponse(OperationBase):
     id: int
@@ -35,3 +39,22 @@ class OperationResponse(OperationBase):
 
     class Config:
         from_attributes = True
+
+
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3, description="Логин пользователя")
+    password: str = Field(..., min_length=4,
+                          description="Пароль (будет захеширован)")
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        from_attributes = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

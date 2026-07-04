@@ -61,3 +61,20 @@ def get_finance_summary(db: Session, user_id: int):
         .filter(models.Operation.user_id == user_id, models.Operation.type == "expense").scalar() or 0.0
 
     return {"total_income": income, "total_expense": expense, "balance": income - expense}
+
+
+def get_user_by_username(db: Session, username: str):
+    """Ищет пользователя по логину"""
+    return db.query(models.User).filter(models.User.username == username).first()
+
+
+def create_user(db: Session, user: schemas.UserCreate, password_hash: str):
+    """Создает нового пользователя с уже захешированным паролем"""
+    db_user = models.User(
+        username=user.username,
+        password_hash=password_hash
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
