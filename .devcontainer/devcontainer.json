@@ -4,6 +4,15 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "runArgs": [
+    "--platform",
+    "linux/amd64"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
   "forwardPorts": [
     8000,
     5173

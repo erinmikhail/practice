@@ -10,9 +10,9 @@ import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from database.session import get_db
-from services.text_AI import process_user_text
-from services.OCR_AI import process_image
+from backend.database.session import get_db
+from backend.services import text_AI
+from backend.services import OCR_AI
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def import_from_text(payload: TextImportRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Text field is empty")
 
     try:
-        drafts = process_user_text(payload.text)
+        drafts = text_AI.process_text(payload.text)
     except Exception:
         logger.exception("process_user_text failed")
         raise HTTPException(
@@ -64,7 +64,7 @@ def import_from_image(file: UploadFile = File(...), db: Session = Depends(get_db
             tmp.write(file.file.read())
             tmp_path = tmp.name
 
-        drafts = process_image(tmp_path)
+        drafts = OCR_AI.process_image(tmp_path)
     except HTTPException:
         raise
     except Exception:

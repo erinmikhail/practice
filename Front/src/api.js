@@ -8,20 +8,20 @@ const api = axios.create({ baseURL });
 
 // Получить список всех операций.
 export async function getOperations() {
-  const response = await api.get('/transactions/');
+  const response = await api.get('/operations/');
   return response.data;
 }
 
 // Сохранить одну операцию. Сервер сам присваивает ей id и возвращает
 // уже сохранённую операцию — используем именно то, что он вернул.
 export async function createOperation(operation) {
-  const response = await api.post('/transactions/', operation);
+  const response = await api.post('/operations/', operation);
   return response.data;
 }
 
 // Удалить операцию по id.
 export async function deleteOperation(id) {
-  await api.delete(`/transactions/${id}`);
+  await api.delete(`/operations/${id}`);
 }
 
 // Разобрать вставленный текст через AI-агента на сервере.
