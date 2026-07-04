@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, EmailStr
 from datetime import date as dt_date
 from typing import Optional
 
@@ -54,8 +54,8 @@ class RecurringOperationResponse(RecurringOperationBase):
 
 # СХЕМЫ АВТОРИЗАЦИИ
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3)
-    password: str = Field(..., min_length=4)
+    username: EmailStr = Field(..., description="Email пользователя")
+    password: str = Field(..., min_length=4, description="Пароль")
     consent_given: bool = Field(..., description="Обязательное согласие на обработку данных")
 
     @field_validator('consent_given')
@@ -64,9 +64,13 @@ class UserCreate(BaseModel):
             raise ValueError("User must give consent to process data")
         return v
 
+class UserLogin(BaseModel):
+    username: EmailStr = Field(..., description="Email для входа")
+    password: str = Field(..., description="Пароль для входа")
+
 class UserResponse(BaseModel):
     id: int
-    username: str
+    username: EmailStr
     class Config: from_attributes = True
 
 class Token(BaseModel):
