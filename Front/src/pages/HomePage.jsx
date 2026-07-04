@@ -19,7 +19,8 @@ export function HomePage({ operations, loading, loadError }) {
     <div className="max-w-4xl">
       <h2 className="text-xl font-semibold text-slate-800 mb-6">Главная</h2>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      {/* На телефоне (< sm) карточки идут в один столбик, начиная с sm — в ряд */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatsCard title="Доходы" amount={stats.totalIncome} variant="income" />
         <StatsCard title="Расходы" amount={stats.totalExpenses} variant="expense" />
         <StatsCard title="Баланс" amount={stats.balance} variant="balance" />

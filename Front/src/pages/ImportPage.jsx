@@ -57,6 +57,12 @@ export function ImportPage({ onConfirm }) {
     setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
   }
 
+  // Пользователь исправил сумму/категорию черновика вручную — просто
+  // обновляем этот черновик в списке, в базу пока ничего не уходит.
+  function handleUpdateDraft(id, changes) {
+    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...changes } : d)));
+  }
+
   function handleDiscardAll() {
     setDrafts([]);
   }
@@ -75,6 +81,7 @@ export function ImportPage({ onConfirm }) {
         onConfirmAll={handleConfirmAll}
         onDiscard={handleDiscard}
         onDiscardAll={handleDiscardAll}
+        onUpdate={handleUpdateDraft}
       />
     </div>
   );
