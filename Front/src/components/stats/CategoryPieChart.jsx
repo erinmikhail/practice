@@ -29,7 +29,7 @@ export function CategoryPieChart({ breakdown }) {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex items-center gap-8 flex-wrap">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex items-center justify-center gap-8 flex-wrap">
       {/* Сама диаграмма: цветной круг с белой дыркой посередине (донат) */}
       <div
         className="w-48 h-48 rounded-full shrink-0 relative"

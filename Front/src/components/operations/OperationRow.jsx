@@ -6,7 +6,9 @@ export function OperationRow({ operation, onDelete }) {
 
   return (
     <li className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div className="flex items-center gap-3 min-w-0">
+      {/* flex-wrap — на узком экране бейджи и комментарий переносятся на
+          свою строку, а не сжимаются до нечитаемой полоски рядом с кнопкой. */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
         <span
           className={`text-sm font-semibold shrink-0 ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}
         >
@@ -17,7 +19,9 @@ export function OperationRow({ operation, onDelete }) {
         </span>
         <span className="text-xs text-slate-400 shrink-0">{formatDate(operation.date)}</span>
         {operation.comment && (
-          <span className="text-sm text-slate-500 truncate">{operation.comment}</span>
+          <span className="text-sm text-slate-500 basis-full sm:basis-auto sm:truncate">
+            {operation.comment}
+          </span>
         )}
       </div>
 
