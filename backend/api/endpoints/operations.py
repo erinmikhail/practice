@@ -28,6 +28,28 @@ async def get_operations(
     return operations
 
 
+@router.get("/summary", response_model=schemas.OperationSummary)
+async def get_summary(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """Получить сводку по доходам и расходам"""
+    summary = crud.get_finance_summary(db=db, user_id=user_id)
+
+    return summary
+
+
+@router.get("/recurring", response_model=List[schemas.RecurringOperationResponse])
+async def get_recurring_operations(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """Получить список всех регулярных операций пользователя."""
+    recurring_ops = crud.get_recurring_operations(db=db, user_id=user_id)
+
+    return recurring_ops
+
+
 @router.post(
     "/",
     response_model=schemas.OperationResponse,
@@ -48,7 +70,34 @@ async def create_operation(
     - **comment**: Комментарий (опционально)
     """
     new_operation = crud.create_operation(db, operation, user_id=user_id)
+
     return new_operation
+
+
+@router.post(
+    "/recurring",
+    response_model=schemas.RecurringOperationResponse,
+    status_code=status.HTTP_201_CREATED
+)
+async def create_recurring_operation(
+    operation: schemas.RecurringOperationCreate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Создать новую регулярную операцию.
+
+    - **amount**: Сумма операции (положительное число)
+    - **type**: Тип операции ("income", "expense")
+    - **category**: Категория
+    - **frequency**: Частота операции (monthly, weekly, yearly)
+    - **next_date**: Дата
+    - **comment**: Комментарий (опционально)
+    """
+    new_recurring_op = crud.create_recurring_operation(
+        db=db, operation=operation, user_id=user_id)
+
+    return new_recurring_op
 
 
 @router.delete("/{operation_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -64,6 +113,29 @@ async def delete_operation(
     """
     deleted_operation = crud.delete_operation(
         db, operation_id, user_id=user_id)
+
+    if not deleted_operation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"operation with id {operation_id} not found"
+        )
+
+    return None
+
+
+@router.delete("/recurring/{operation_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_recurring_operation(
+    operation_id: Annotated[int, Path(gt=0)],
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Удалить регулярную операцию по ID.
+
+    - **operation_id**: ID операции для удаления
+    """
+    deleted_operation = crud.delete_recurring_operation(
+        db, operation_id, user_id)
 
     if not deleted_operation:
         raise HTTPException(
