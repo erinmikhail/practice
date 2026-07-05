@@ -5,6 +5,7 @@ from typing import List, Annotated
 from backend.database.session import get_db
 from backend.database import crud
 from backend.api import schemas
+from backend.core.security import get_current_user
 
 router = APIRouter(prefix="/api/operations", tags=["operations"])
 
@@ -13,7 +14,8 @@ router = APIRouter(prefix="/api/operations", tags=["operations"])
 async def get_operations(
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(gt=0)] = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
 ):
     """
     Получить список всех операций пользователя.
@@ -21,9 +23,8 @@ async def get_operations(
     - **skip**: Количество пропускаемых записей
     - **limit**: Максимальное количество возвращаемых записей
     """
-    # Используем user_id=1 как заглушку для текущего пользователя
     operations = crud.get_user_operations(
-        db, user_id=1, skip=skip, limit=limit)
+        db, user_id=user_id, skip=skip, limit=limit)
     return operations
 
 
@@ -34,7 +35,8 @@ async def get_operations(
 )
 async def create_operation(
     operation: schemas.OperationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
 ):
     """
     Создать новую операцию.
@@ -45,23 +47,23 @@ async def create_operation(
     - **date**: Дата в формате YYYY-MM-DD
     - **comment**: Комментарий (опционально)
     """
-    # Заглушка user_id=1
-    new_operation = crud.create_operation(db, operation, user_id=1)
+    new_operation = crud.create_operation(db, operation, user_id=user_id)
     return new_operation
 
 
 @router.delete("/{operation_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_operation(
     operation_id: Annotated[int, Path(gt=0)],
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
 ):
     """
     Удалить операцию по ID.
 
     - **operation_id**: ID операции для удаления
     """
-    # Заглушка user_id=1
-    deleted_operation = crud.delete_operation(db, operation_id, user_id=1)
+    deleted_operation = crud.delete_operation(
+        db, operation_id, user_id=user_id)
 
     if not deleted_operation:
         raise HTTPException(

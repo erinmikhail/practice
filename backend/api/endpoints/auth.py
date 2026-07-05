@@ -13,14 +13,14 @@ from sqlalchemy.orm import Session
 from backend.database.session import get_db
 from backend.database import crud
 from backend.api import schemas
-from backend.core.security import hash_password, verify_password
+from backend.core.security import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 @router.post(
     "/register",
-    response_model=schemas.UserResponse,
+    response_model=schemas.Token,
     status_code=status.HTTP_201_CREATED,
 )
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -31,10 +31,15 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     hashed = hash_password(user.password)
     new_user = crud.create_user(db, user=user, password_hash=hashed)
-    return new_user
+
+    access_token = create_access_token(new_user.id)
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    response_model=schemas.Token
+)
 def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = crud.get_user_by_username(db, credentials.username)
 
@@ -44,4 +49,5 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     if not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
-    return {"message": "success"}
+    access_token = create_access_token(user.id)
+    return {"access_token": access_token, "token_type": "bearer"}
