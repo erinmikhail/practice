@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { importFromText, importFromImage } from '../api';
+import { importFromText, importFromImage, createRecurringOperation } from '../api';
 import { generateId } from '../utils/id';
 import { AiImportPanel } from '../components/ai-import/AiImportPanel';
 import { ImportPreviewList } from '../components/ai-import/ImportPreviewList';
@@ -40,10 +40,17 @@ export function ImportPage({ onConfirm }) {
   }
 
   // Временный id черновика не должен уйти на сервер как настоящий id операции —
-  // убираем его перед сохранением.
+  // убираем его перед сохранением. Если ИИ пометил операцию как регулярную
+  // (Task2.txt, "каждый месяц"/"подписка"), она уходит не в обычные операции,
+  // а в регулярные платежи — там дата становится next_date.
   async function handleConfirm(draft) {
-    const { id, ...operation } = draft;
-    await onConfirm(operation);
+    const { id, is_recurring, frequency, ...rest } = draft;
+    if (is_recurring) {
+      const { date, ...operation } = rest;
+      await createRecurringOperation({ ...operation, frequency, next_date: date });
+    } else {
+      await onConfirm(rest);
+    }
     setDrafts((prev) => prev.filter((d) => d.id !== id));
   }
 

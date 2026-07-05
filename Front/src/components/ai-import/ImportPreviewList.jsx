@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CATEGORIES, getCategoryLabel } from '../../constants/categories';
+import { getFrequencyLabel } from '../../constants/frequencies';
 import { formatMoney, formatDate } from '../../utils/formatters';
 
 // Показываем то, что "распознал" AI-агент, но ещё НЕ добавляем в реальный
@@ -104,6 +105,13 @@ export function ImportPreviewList({ items, onConfirm, onConfirmAll, onDiscard, o
                   <span className="text-xs rounded-full bg-slate-100 px-2 py-0.5">
                     {getCategoryLabel(item.category)}
                   </span>
+                  {/* ИИ пометил операцию как регулярную (Task2.txt) — при
+                      подтверждении она уйдёт в "Подписки", а не в обычные операции. */}
+                  {item.is_recurring && (
+                    <span className="text-xs rounded-full bg-sky-50 text-sky-600 px-2 py-0.5">
+                      Регулярный: {getFrequencyLabel(item.frequency)}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-400">{formatDate(item.date)}</span>
                   <span className="text-slate-500 truncate">{item.comment}</span>
                 </div>

@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CATEGORIES, DEFAULT_CATEGORY, getCategoryLabel } from '../constants/categories';
+import { FREQUENCIES, getFrequencyLabel } from '../constants/frequencies';
 import { formatMoney, formatDate } from '../utils/formatters';
-import { generateId } from '../utils/id';
-
-const FREQUENCIES = [
-  { value: 'monthly', label: 'Ежемесячно' },
-  { value: 'weekly', label: 'Еженедельно' },
-  { value: 'yearly', label: 'Ежегодно' },
-];
+import {
+  getRecurringOperations,
+  createRecurringOperation,
+  deleteRecurringOperation,
+} from '../api';
 
 const EMPTY_FORM = {
   amount: '',
@@ -18,39 +17,49 @@ const EMPTY_FORM = {
   comment: '',
 };
 
-// Вкладка "Подписки и регулярные платежи" — задача из нового задания.
-// Бэкенд для recurring_operations ещё не готов (Артём, Task4.txt), поэтому
-// это пока витрина: список живёт только в состоянии этого компонента и
-// пропадает при обновлении страницы, ничего никуда не отправляется.
+// Вкладка "Подписки и регулярные платежи" — теперь подключена к реальному
+// бэкенду (GET/POST/DELETE /api/operations/recurring, Артём).
 export function RecurringPage() {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [values, setValues] = useState(EMPTY_FORM);
+
+  useEffect(() => {
+    getRecurringOperations()
+      .then(setItems)
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }, []);
 
   function updateField(field, value) {
     setValues((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     if (!values.amount) return;
 
-    setItems((prev) => [...prev, { ...values, id: generateId(), amount: Number(values.amount) }]);
+    const saved = await createRecurringOperation({
+      amount: Number(values.amount),
+      type: values.type,
+      category: values.category,
+      frequency: values.frequency,
+      next_date: values.nextDate,
+      comment: values.comment,
+    });
+    setItems((prev) => [...prev, saved]);
     setValues((prev) => ({ ...prev, amount: '', comment: '' }));
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
+    await deleteRecurringOperation(id);
     setItems((prev) => prev.filter((item) => item.id !== id));
   }
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800">Подписки и регулярные платежи</h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Пока список хранится только в этой вкладке и пропадает при обновлении страницы —
-          сохранение на сервере появится, когда будет готов бэкенд для регулярных операций.
-        </p>
-      </div>
+      <h2 className="text-xl font-semibold text-slate-800">Подписки и регулярные платежи</h2>
 
       <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <h3 className="text-lg font-medium text-slate-700">Добавить регулярный платёж</h3>
@@ -141,49 +150,54 @@ export function RecurringPage() {
         </button>
       </form>
 
-      {items.length === 0 ? (
-        <p className="text-slate-400 text-sm">Регулярных платежей пока нет — добавьте первый выше.</p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3"
-            >
-              {/* flex-wrap — на телефоне бейджи и дата переносятся на свою
-                  строку вместо того, чтобы наезжать на кнопку "Удалить". */}
-              <div className="flex flex-wrap min-w-0 items-center gap-2 sm:gap-3">
-                <span
-                  className={`shrink-0 text-sm font-semibold ${
-                    item.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
-                  }`}
-                >
-                  {item.type === 'income' ? '+' : '-'}{formatMoney(item.amount)}
-                </span>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                  {getCategoryLabel(item.category)}
-                </span>
-                <span className="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-xs text-sky-600">
-                  {FREQUENCIES.find((f) => f.value === item.frequency)?.label}
-                </span>
-                <span className="shrink-0 text-xs text-slate-400">{formatDate(item.nextDate)}</span>
-                {item.comment && (
-                  <span className="basis-full text-sm text-slate-500 sm:basis-auto sm:truncate">
-                    {item.comment}
-                  </span>
-                )}
-              </div>
+      {loading && <p className="text-slate-500 text-sm">Загрузка...</p>}
+      {loadError && <p className="text-rose-600 text-sm">Не удалось загрузить данные с сервера.</p>}
 
-              <button
-                type="button"
-                onClick={() => handleDelete(item.id)}
-                className="shrink-0 text-xs text-rose-500 hover:text-rose-700"
+      {!loading && !loadError && (
+        items.length === 0 ? (
+          <p className="text-slate-400 text-sm">Регулярных платежей пока нет — добавьте первый выше.</p>
+        ) : (
+          <ul className="space-y-2">
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3"
               >
-                Удалить
-              </button>
-            </li>
-          ))}
-        </ul>
+                {/* flex-wrap — на телефоне бейджи и дата переносятся на свою
+                    строку вместо того, чтобы наезжать на кнопку "Удалить". */}
+                <div className="flex flex-wrap min-w-0 items-center gap-2 sm:gap-3">
+                  <span
+                    className={`shrink-0 text-sm font-semibold ${
+                      item.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                    }`}
+                  >
+                    {item.type === 'income' ? '+' : '-'}{formatMoney(item.amount)}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                    {getCategoryLabel(item.category)}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-xs text-sky-600">
+                    {getFrequencyLabel(item.frequency)}
+                  </span>
+                  <span className="shrink-0 text-xs text-slate-400">{formatDate(item.next_date)}</span>
+                  {item.comment && (
+                    <span className="basis-full text-sm text-slate-500 sm:basis-auto sm:truncate">
+                      {item.comment}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleDelete(item.id)}
+                  className="shrink-0 text-xs text-rose-500 hover:text-rose-700"
+                >
+                  Удалить
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
       )}
     </div>
   );
