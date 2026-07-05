@@ -12,16 +12,12 @@ import dateparser
 
 load_dotenv()
 
-# === ПУТЬ К TESSERACT (ДЛЯ LINUX) ===
-pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
-# === ДОПУСТИМЫЕ КАТЕГОРИИ ===
 ALLOWED_CATEGORIES = [
     "groceries", "transport", "cafe", "entertainment",
     "health", "transfers", "salary", "other"
 ]
 
-# === СИСТЕМНЫЙ ПРОМПТ ===
 SYSTEM_PROMPT = """
 Ты — строгий парсер финансовых операций.
 
@@ -174,7 +170,6 @@ def process_image(image_path):
 
     image = Image.open(image_path)
 
-    # 1. Переводим в оттенки серого
     gray_image = image.convert('L')
 
     stat = ImageStat.Stat(gray_image)
@@ -185,11 +180,9 @@ def process_image(image_path):
     else:
         prepared_image = gray_image
 
-    # 3. Повышаем контрастность текста
     enhancer = ImageEnhance.Contrast(prepared_image)
     contrast_image = enhancer.enhance(2.0)
 
-    # 4. Увеличиваем разрешение в 2 раза
     width, height = contrast_image.size
     final_image = contrast_image.resize(
         (width * 2, height * 2), Image.Resampling.LANCZOS
