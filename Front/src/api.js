@@ -6,10 +6,8 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 const api = axios.create({ baseURL });
 
-// Подставляем токен из localStorage в каждый запрос, если он есть — так
-// бэкенд сможет понять, какой это пользователь, когда JWT-проверка
-// (get_current_user) будет готова. Пока бэк её игнорирует, но заголовок
-// уже отправляется в правильном формате.
+// Подставляем токен из localStorage в каждый запрос, если он есть — бэкенд
+// проверяет его через get_current_user и по нему понимает, чьи это данные.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token) {
@@ -51,16 +49,14 @@ export async function importFromImage(file) {
   return response.data;
 }
 
-// Вход в систему. Сам эндпоинт /api/auth/login делает другая часть команды
-// (JWT ещё не готов на бэке) — здесь уже вызываем его в ожидаемом формате
-// { access_token }, чтобы не переделывать фронт, когда он появится.
+// Вход в систему. Возвращает { access_token, token_type }.
 export async function login(username, password) {
   const response = await api.post('/auth/login', { username, password });
   return response.data;
 }
 
-// Регистрация. consentGiven уходит на сервер как consent_given — по
-// Task3.txt бэк (Катя) будет требовать это поле строго true.
+// Регистрация. username должен быть email (бэк валидирует как EmailStr),
+// consentGiven уходит как consent_given — бэк отклонит запрос без true.
 export async function register(username, password, consentGiven) {
   const response = await api.post('/auth/register', {
     username,
@@ -68,4 +64,19 @@ export async function register(username, password, consentGiven) {
     consent_given: consentGiven,
   });
   return response.data;
+}
+
+// Регулярные операции (подписки, зарплата, коммуналка и т.п.).
+export async function getRecurringOperations() {
+  const response = await api.get('/operations/recurring');
+  return response.data;
+}
+
+export async function createRecurringOperation(operation) {
+  const response = await api.post('/operations/recurring', operation);
+  return response.data;
+}
+
+export async function deleteRecurringOperation(id) {
+  await api.delete(`/operations/recurring/${id}`);
 }

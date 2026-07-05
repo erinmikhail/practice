@@ -84,8 +84,9 @@ export function AuthPage({ onAuthSuccess }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-600">Логин</label>
+            <label className="mb-1 block text-sm font-medium text-slate-600">Email</label>
             <input
+              type="email"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               required
@@ -100,8 +101,13 @@ export function AuthPage({ onAuthSuccess }) {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
+              minLength={6}
+              maxLength={72}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
             />
+            {mode === 'register' && (
+              <p className="mt-1 text-xs text-slate-400">От 6 до 72 символов</p>
+            )}
           </div>
 
           <div>
