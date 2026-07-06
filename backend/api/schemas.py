@@ -3,11 +3,13 @@ from datetime import date as dt_date
 from typing import Optional
 
 ALLOWED_CATEGORIES = [
-    "groceries", "transport", "cafe", "entertainment", 
+    "groceries", "transport", "cafe", "entertainment",
     "health", "transfers", "salary", "other"
 ]
 
 # СХЕМЫ ОПЕРАЦИЙ
+
+
 class OperationBase(BaseModel):
     amount: float = Field(..., gt=0, description="Сумма операции")
     type: str = Field(..., description="Тип: income или expense")
@@ -24,15 +26,21 @@ class OperationBase(BaseModel):
     @field_validator('category')
     def validate_category(cls, v):
         if v not in ALLOWED_CATEGORIES:
-            raise ValueError(f"Unknown category. Allowed: {', '.join(ALLOWED_CATEGORIES)}")
+            raise ValueError(
+                f"Unknown category. Allowed: {', '.join(ALLOWED_CATEGORIES)}")
         return v
 
-class OperationCreate(OperationBase): pass
+
+class OperationCreate(OperationBase):
+    pass
+
 
 class OperationResponse(OperationBase):
     id: int
     user_id: int
-    class Config: from_attributes = True
+
+    class Config:
+        from_attributes = True
 
 
 # СХЕМЫ РЕГУЛЯРНЫХ ОПЕРАЦИЙ
@@ -44,19 +52,26 @@ class RecurringOperationBase(BaseModel):
     next_date: dt_date
     comment: Optional[str] = None
 
-class RecurringOperationCreate(RecurringOperationBase): pass
+
+class RecurringOperationCreate(RecurringOperationBase):
+    pass
+
 
 class RecurringOperationResponse(RecurringOperationBase):
     id: int
     user_id: int
-    class Config: from_attributes = True
+
+    class Config:
+        from_attributes = True
 
 
 # СХЕМЫ АВТОРИЗАЦИИ
 class UserCreate(BaseModel):
     username: EmailStr = Field(..., description="Email пользователя")
-    password: str = Field(..., min_length=4, description="Пароль")
-    consent_given: bool = Field(..., description="Обязательное согласие на обработку данных")
+    password: str = Field(..., min_length=6,
+                          max_length=72, description="Пароль")
+    consent_given: bool = Field(...,
+                                description="Обязательное согласие на обработку данных")
 
     @field_validator('consent_given')
     def check_consent(cls, v):
@@ -64,14 +79,19 @@ class UserCreate(BaseModel):
             raise ValueError("User must give consent to process data")
         return v
 
+
 class UserLogin(BaseModel):
     username: EmailStr = Field(..., description="Email для входа")
     password: str = Field(..., description="Пароль для входа")
 
+
 class UserResponse(BaseModel):
     id: int
     username: EmailStr
-    class Config: from_attributes = True
+
+    class Config:
+        from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str
