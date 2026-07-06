@@ -64,6 +64,16 @@ def create_recurring_operation(db: Session, operation: schemas.RecurringOperatio
     return db_operation
 
 
+def delete_recurring_operation(db: Session, operation_id: int, user_id: int):
+    db_operation = db.query(models.RecurringOperation).filter(
+        models.RecurringOperation.id == operation_id, models.RecurringOperation.user_id == user_id).first()
+    if db_operation:
+        db.delete(db_operation)
+        db.commit()
+        return True
+    return False
+
+
 # CRUD ПОЛЬЗОВАТЕЛЕЙ
 def get_user_by_username(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()

@@ -5,6 +5,7 @@ from typing import List, Annotated
 from backend.database.session import get_db
 from backend.database import crud
 from backend.api import schemas
+from backend.core.security import get_current_user
 
 router = APIRouter(prefix="/api/operations", tags=["operations"])
 
@@ -13,7 +14,8 @@ router = APIRouter(prefix="/api/operations", tags=["operations"])
 async def get_operations(
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(gt=0)] = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
 ):
     """
     Получить список всех операций пользователя.
@@ -21,10 +23,31 @@ async def get_operations(
     - **skip**: Количество пропускаемых записей
     - **limit**: Максимальное количество возвращаемых записей
     """
-    # Используем user_id=1 как заглушку для текущего пользователя
     operations = crud.get_user_operations(
-        db, user_id=1, skip=skip, limit=limit)
+        db, user_id=user_id, skip=skip, limit=limit)
     return operations
+
+
+@router.get("/summary", response_model=schemas.OperationSummary)
+async def get_summary(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """Получить сводку по доходам и расходам"""
+    summary = crud.get_finance_summary(db=db, user_id=user_id)
+
+    return summary
+
+
+@router.get("/recurring", response_model=List[schemas.RecurringOperationResponse])
+async def get_recurring_operations(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """Получить список всех регулярных операций пользователя."""
+    recurring_ops = crud.get_recurring_operations(db=db, user_id=user_id)
+
+    return recurring_ops
 
 
 @router.post(
@@ -34,7 +57,8 @@ async def get_operations(
 )
 async def create_operation(
     operation: schemas.OperationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
 ):
     """
     Создать новую операцию.
@@ -45,23 +69,73 @@ async def create_operation(
     - **date**: Дата в формате YYYY-MM-DD
     - **comment**: Комментарий (опционально)
     """
-    # Заглушка user_id=1
-    new_operation = crud.create_operation(db, operation, user_id=1)
+    new_operation = crud.create_operation(db, operation, user_id=user_id)
+
     return new_operation
+
+
+@router.post(
+    "/recurring",
+    response_model=schemas.RecurringOperationResponse,
+    status_code=status.HTTP_201_CREATED
+)
+async def create_recurring_operation(
+    operation: schemas.RecurringOperationCreate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Создать новую регулярную операцию.
+
+    - **amount**: Сумма операции (положительное число)
+    - **type**: Тип операции ("income", "expense")
+    - **category**: Категория
+    - **frequency**: Частота операции (monthly, weekly, yearly)
+    - **next_date**: Дата
+    - **comment**: Комментарий (опционально)
+    """
+    new_recurring_op = crud.create_recurring_operation(
+        db=db, operation=operation, user_id=user_id)
+
+    return new_recurring_op
 
 
 @router.delete("/{operation_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_operation(
     operation_id: Annotated[int, Path(gt=0)],
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
 ):
     """
     Удалить операцию по ID.
 
     - **operation_id**: ID операции для удаления
     """
-    # Заглушка user_id=1
-    deleted_operation = crud.delete_operation(db, operation_id, user_id=1)
+    deleted_operation = crud.delete_operation(
+        db, operation_id, user_id=user_id)
+
+    if not deleted_operation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"operation with id {operation_id} not found"
+        )
+
+    return None
+
+
+@router.delete("/recurring/{operation_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_recurring_operation(
+    operation_id: Annotated[int, Path(gt=0)],
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Удалить регулярную операцию по ID.
+
+    - **operation_id**: ID операции для удаления
+    """
+    deleted_operation = crud.delete_recurring_operation(
+        db, operation_id, user_id)
 
     if not deleted_operation:
         raise HTTPException(

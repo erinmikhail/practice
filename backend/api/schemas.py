@@ -43,14 +43,35 @@ class OperationResponse(OperationBase):
         from_attributes = True
 
 
+class OperationSummary(BaseModel):
+    total_income: float
+    total_expense: float
+    balance: float
+
+
 # СХЕМЫ РЕГУЛЯРНЫХ ОПЕРАЦИЙ
 class RecurringOperationBase(BaseModel):
     amount: float = Field(..., gt=0)
-    type: str
-    category: str
+    type: str = Field(..., description="Тип: income или expense")
+    category: str = Field(..., description="Категория на латинице")
     frequency: str = Field(..., description="Частота: monthly, weekly, yearly")
-    next_date: dt_date
+    next_date: dt_date = Field(..., description="Дата")
     comment: Optional[str] = None
+
+    @field_validator('type')
+    def validate_type(cls, v):
+        if v not in ['income', 'expense']:
+            raise ValueError("Type must be 'income' or 'expense'")
+        return v
+
+    @field_validator('frequency')
+    def validate_frequency(cls, v):
+        if v not in ['daily', 'weekly', 'monthly', 'annually']:
+            raise ValueError(
+                "Type must be 'daily', 'weekly', 'monthly' or 'annually'")
+        return v
+
+    # Нужен список возможных типов регулярных операций для валидации
 
 
 class RecurringOperationCreate(RecurringOperationBase):
