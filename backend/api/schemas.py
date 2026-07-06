@@ -117,3 +117,9 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class AnalyticsItem(BaseModel):
+    month: str
+    income: float
+    expense: float

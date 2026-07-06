@@ -80,3 +80,9 @@ export async function createRecurringOperation(operation) {
 export async function deleteRecurringOperation(id) {
   await api.delete(`/operations/recurring/${id}`);
 }
+
+// Получить аналитику по месяцам (доходы и расходы)
+export async function getAnalytics() {
+  const response = await api.get('/operations/analytics');
+  return response.data;
+}

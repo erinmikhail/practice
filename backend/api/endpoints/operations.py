@@ -19,10 +19,9 @@ async def get_operations(
 ):
     """
     Получить список всех операций пользователя.
-
-    - **skip**: Количество пропускаемых записей
-    - **limit**: Максимальное количество возвращаемых записей
+    Перед выдачей проверяет и начисляет автоплатежи.
     """
+    crud.process_due_recurring_operations(db, user_id)
     operations = crud.get_user_operations(
         db, user_id=user_id, skip=skip, limit=limit)
     return operations
@@ -34,8 +33,8 @@ async def get_summary(
     user_id: int = Depends(get_current_user)
 ):
     """Получить сводку по доходам и расходам"""
+    crud.process_due_recurring_operations(db, user_id)
     summary = crud.get_finance_summary(db=db, user_id=user_id)
-
     return summary
 
 
@@ -46,7 +45,6 @@ async def get_recurring_operations(
 ):
     """Получить список всех регулярных операций пользователя."""
     recurring_ops = crud.get_recurring_operations(db=db, user_id=user_id)
-
     return recurring_ops
 
 
@@ -60,17 +58,8 @@ async def create_operation(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user)
 ):
-    """
-    Создать новую операцию.
-
-    - **amount**: Сумма операции (положительное число)
-    - **type**: Тип операции ("income", "expense")
-    - **category**: Категория ("groceries", "transport", "cafe", "entertainment", "health", "transfers", "salary", "other")
-    - **date**: Дата в формате YYYY-MM-DD
-    - **comment**: Комментарий (опционально)
-    """
+    """Создать новую операцию."""
     new_operation = crud.create_operation(db, operation, user_id=user_id)
-
     return new_operation
 
 
@@ -84,19 +73,9 @@ async def create_recurring_operation(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user)
 ):
-    """
-    Создать новую регулярную операцию.
-
-    - **amount**: Сумма операции (положительное число)
-    - **type**: Тип операции ("income", "expense")
-    - **category**: Категория
-    - **frequency**: Частота операции (monthly, weekly, yearly)
-    - **next_date**: Дата
-    - **comment**: Комментарий (опционально)
-    """
+    """Создать новую регулярную операцию."""
     new_recurring_op = crud.create_recurring_operation(
         db=db, operation=operation, user_id=user_id)
-
     return new_recurring_op
 
 
@@ -106,11 +85,7 @@ async def delete_operation(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user)
 ):
-    """
-    Удалить операцию по ID.
-
-    - **operation_id**: ID операции для удаления
-    """
+    """Удалить операцию по ID."""
     deleted_operation = crud.delete_operation(
         db, operation_id, user_id=user_id)
 
@@ -119,7 +94,6 @@ async def delete_operation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"operation with id {operation_id} not found"
         )
-
     return None
 
 
@@ -129,11 +103,7 @@ async def delete_recurring_operation(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user)
 ):
-    """
-    Удалить регулярную операцию по ID.
-
-    - **operation_id**: ID операции для удаления
-    """
+    """Удалить регулярную операцию по ID."""
     deleted_operation = crud.delete_recurring_operation(
         db, operation_id, user_id)
 
@@ -142,5 +112,17 @@ async def delete_recurring_operation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"operation with id {operation_id} not found"
         )
-
     return None
+
+
+@router.get("/analytics", response_model=List[schemas.AnalyticsItem])
+async def get_analytics(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Получить аналитику доходов и расходов по месяцам (данные для графиков).
+    Перед выдачей данных проверяет и начисляет автоплатежи.
+    """
+    crud.process_due_recurring_operations(db, user_id)
+    return crud.get_analytics(db, user_id)
