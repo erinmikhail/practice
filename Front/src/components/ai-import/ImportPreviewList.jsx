@@ -70,8 +70,7 @@ export function ImportPreviewList({ items, onConfirm, onConfirmAll, onDiscard, o
             >
               {isEditing ? (
                 // Режим редактирования: сумма и категория — обычные поля ввода,
-                // остальное (дата, комментарий) не трогаем — ТЗ просит править
-                // только сумму/категорию, если AI ошибся.
+                // остальное (дата, комментарий) не редактируем.
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <input
                     type="number"
@@ -105,8 +104,8 @@ export function ImportPreviewList({ items, onConfirm, onConfirmAll, onDiscard, o
                   <span className="text-xs rounded-full bg-slate-100 px-2 py-0.5">
                     {getCategoryLabel(item.category)}
                   </span>
-                  {/* ИИ пометил операцию как регулярную (Task2.txt) — при
-                      подтверждении она уйдёт в "Подписки", а не в обычные операции. */}
+                  {/* ИИ пометил операцию как регулярную — при подтверждении
+                      она уйдёт в "Подписки", а не в обычные операции. */}
                   {item.is_recurring && (
                     <span className="text-xs rounded-full bg-sky-50 text-sky-600 px-2 py-0.5">
                       Регулярный: {getFrequencyLabel(item.frequency)}

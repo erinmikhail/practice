@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 // из App.jsx — именно там живёт authToken, который решает, пускать ли
 // пользователя дальше стартового экрана входа.
 export function Sidebar({ isOpen, onClose, onLogout }) {
-  // "Ваше имя" по ТЗ хранится только в localStorage — читаем один раз
+  // "Ваше имя" хранится только в localStorage — читаем один раз
   // при монтировании, на сервер это значение никогда не уходит. После
   // logout App.jsx уводит на /login и Sidebar размонтируется, так что
   // это значение не нужно сбрасывать вручную.
@@ -65,8 +65,7 @@ export function Sidebar({ isOpen, onClose, onLogout }) {
           ))}
         </nav>
 
-        {/* Угол интерфейса с именем пользователя — требование из ТЗ.
-            mt-auto прижимает этот блок к низу сайдбара. */}
+        {/* Имя пользователя внизу сайдбара — mt-auto прижимает блок к низу. */}
         <div className="mt-auto border-t border-slate-700 pt-3 text-sm">
           {userName ? (
             <div className="flex items-center justify-between gap-2 px-2">
