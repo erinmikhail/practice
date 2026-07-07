@@ -10,13 +10,13 @@ import dateparser
 
 load_dotenv()
 
-# ДОПУСТИМЫЕ КАТЕГОРИИ
+
 ALLOWED_CATEGORIES = [
     "groceries", "transport", "cafe", "entertainment",
     "health", "transfers", "salary", "other"
 ]
 
-# СИСТЕМНЫЙ ПРОМПТ (ТОЛЬКО MONTHLY)
+
 SYSTEM_PROMPT = """
 Ты — строгий парсер финансовых операций.
 
