@@ -10,13 +10,13 @@ import dateparser
 
 load_dotenv()
 
-# ДОПУСТИМЫЕ КАТЕГОРИИ
+
 ALLOWED_CATEGORIES = [
     "groceries", "transport", "cafe", "entertainment",
     "health", "transfers", "salary", "other"
 ]
 
-# СИСТЕМНЫЙ ПРОМПТ (ТОЛЬКО MONTHLY)
+
 SYSTEM_PROMPT = """
 Ты — строгий парсер финансовых операций.
 
@@ -49,6 +49,7 @@ SYSTEM_PROMPT = """
 - Переводы между своими счетами → category = "transfers", type = "expense"
 - Пополнения → type = "income"
 - Зарплата → category = "salary", type = "income"
+- Распознавай случаи "100р" "100 рублей" "сто рублей" как сумма
 
 ПРИМЕРЫ ПРАВИЛЬНЫХ ОТВЕТОВ:
 
