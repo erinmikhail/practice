@@ -104,16 +104,20 @@ export function HomePage({ operations, loading, loadError }) {
         <StatsCard title="Баланс" amount={stats.balance} variant="balance" />
       </div>
 
-      {/* Теперь здесь два аккуратных круговых графика рядом */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
+      {/* Здесь применено выравнивание (items-stretch) и flex-1 для равной высоты */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="flex flex-col h-full">
           <h3 className="text-lg font-medium text-slate-700 mb-3">Доходы и Расходы</h3>
-          <IncomeExpensePieChart income={stats.totalIncome} expense={stats.totalExpenses} />
+          <div className="flex-1">
+            <IncomeExpensePieChart income={stats.totalIncome} expense={stats.totalExpenses} />
+          </div>
         </div>
 
-        <div>
+        <div className="flex flex-col h-full">
           <h3 className="text-lg font-medium text-slate-700 mb-3">Структура расходов</h3>
-          <CategoryPieChart breakdown={stats.categoryBreakdown} />
+          <div className="flex-1">
+            <CategoryPieChart breakdown={stats.categoryBreakdown} />
+          </div>
         </div>
       </div>
 
